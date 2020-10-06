@@ -28,8 +28,15 @@ public class SDElementsLibrary {
         headers.put("Authorization","Token "+accessKey);
         HttpResponse<JsonNode> resp = null;
         try {
-            resp = Unirest.get(projects).
-                    headers(headers).asJson();
+            resp = Unirest.get(projects)
+                          .headers(headers)
+                          .asJson()
+                          .ifFailure(response -> {
+                              response.getParsingError().ifPresent(e -> { 
+                                  throw new SDLibraryException("Error parsing response", e);
+                              });
+                              throw new UnhandledSDLibraryException("Bad response", e.getOriginalBody());
+                          });
         } catch (UnirestException e) {
             if(e.getCause() instanceof UnknownHostException) {
                 throw new SDLibraryException("Host not found: "+url, e);
